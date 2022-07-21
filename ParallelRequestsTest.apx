@@ -1,0 +1,24 @@
+@isTest(SeeAllData=true)
+public class PararellBatchesTest {
+    @isTest
+    public static void testParallellBatches() {
+        
+        Map<String, HttpCalloutMock> httpCMap = new Map<String, HttpCalloutMock>();
+        
+        String json1 = '[{"userId": 1,"id": 1,"title": "sunt aut facere repellat provident occaecati excepturi optio reprehenderit","body": "quia et suscipitsuscipit recusandae consequuntur expedita et cumreprehenderit molestiae ut ut quas totamnostrum rerum est autem sunt rem eveniet architecto"}]';
+        SingleRequestMock srm1 = new SingleRequestMock(200, 'Complete', json1, null);
+        httpCMap.put('https://jsonplaceholder.typicode.com/posts',srm1);
+        
+        String json2 = '[{"postId": 1,"id": 1,"name": "id labore ex et quam laborum","email": "Eliseo@gardner.biz","body": "laudantium enim quasi est quidem magnam voluptate ipsam eostempora quo necessitatibusdolor quam autem quasireiciendis et nam sapiente accusantium"}]';
+        SingleRequestMock srm2 = new SingleRequestMock(200, 'Complete', json2, null);
+        httpCMap.put('https://jsonplaceholder.typicode.com/posts/1/comments',srm2);
+        
+        MultipleRequestMock mrm = new MultipleRequestMock(httpCMap);
+        
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, mrm);
+        Id jobId = Database.executeBatch(new FirstBatch(), 200);
+        Test.stopTest();
+        
+    }
+}
