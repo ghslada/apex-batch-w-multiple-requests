@@ -1,0 +1,40 @@
+public class FirstBatch implements Database.Batchable<Map<String, Object>>, 
+Database.AllowsCallouts, Database.Stateful {
+    private List<Map<String, Object>> postsList = new List<Map<String, Object>>();
+    private List<Integer> postsIdsList = new List<Integer>();
+    public String getPostsList(){
+        HttpRequest req = new HttpRequest();
+        Http http = new Http();
+        req.setEndpoint('https://jsonplaceholder.typicode.com/posts');
+        req.setMethod('GET');
+        HttpResponse res = http.send(req);
+        String body = res.getBody();
+        return body;
+    }
+    public List<Map<String, Object>> start( Database.BatchableContext bc ) {  
+        System.debug('Starting job.');
+        String body = getPostsList();
+        List<Object> data = (List<Object>) ((Object) JSON.deserializeUntyped(body));
+        for ( Object obj : data ) {   
+            Map<String, Object> post = (Map<String, Object>) obj;
+            postsList.add(post);
+        }
+        return postsList; 
+    }
+    public void execute( Database.BatchableContext bc, List<Map<String, Object>> postsList ) {  
+        System.debug('Executing...');
+        for ( Map<String, Object> post : postsList ) {
+            System.debug( 'Post: ' + post );
+            Integer postId = (Integer) post.get('id');
+            postsIdsList.add(postId);
+        }
+    }
+    public void finish( Database.BatchableContext bc ) {
+        System.debug('First job finished.');
+        for ( Integer i=0; i<50; i++  ) {
+            Integer postId = postsIdsList.get(i);
+            Id jobId = Database.executeBatch(new SecondBatch(postId));
+        }
+        System.debug('Querying jobs for comments...');
+    }
+}
